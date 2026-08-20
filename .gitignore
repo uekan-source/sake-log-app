@@ -1,0 +1,32 @@
+# Scala / sbt
+target
+.bloop
+.bsp
+.metals
+project/.sbtserver
+project/.sbtserver.lock
+RUNNING_PID
+logs
+
+# Node / SvelteKit
+node_modules
+dist
+.vite
+.svelte-kit
+build
+
+# Editors / OS
+.idea
+.idea_modules
+.vscode
+.classpath
+.project
+.settings
+.DS_Store
+.claude
+*~
+
+# Editor lock / backup files
+.#*
+\#*\#
+~$*
