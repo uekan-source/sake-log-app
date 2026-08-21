@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="430" viewBox="0 0 880 430" font-family="'Hiragino Sans', 'Noto Sans JP', sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 z" fill="#334155"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="880" height="430" fill="#ffffff"/>
+
+  <!-- ===== Brand（銘柄）の確認状態 ===== -->
+  <text x="40" y="42" font-size="17" font-weight="bold" fill="#0f172a">Brand（銘柄）の確認状態</text>
+
+  <!-- 入口: AI の推定で作成 -->
+  <text x="40" y="106" font-size="13" fill="#475569">AI の推定で作成</text>
+  <line x1="160" y1="101" x2="240" y2="101" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 未確定 -->
+  <rect x="245" y="72" width="180" height="56" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+  <text x="335" y="96" font-size="15" font-weight="bold" text-anchor="middle" fill="#78350f">未確定</text>
+  <text x="335" y="116" font-size="11" text-anchor="middle" fill="#92400e">IS_UNCONFIRMED (1)</text>
+
+  <!-- 未確定 → 確定 -->
+  <line x1="425" y1="90" x2="585" y2="90" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="505" y="80" font-size="12" text-anchor="middle" fill="#475569">内容を確認して確定する</text>
+
+  <!-- 確定 -->
+  <rect x="590" y="72" width="180" height="56" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+  <text x="680" y="96" font-size="15" font-weight="bold" text-anchor="middle" fill="#14532d">確定</text>
+  <text x="680" y="116" font-size="11" text-anchor="middle" fill="#166534">IS_CONFIRMED (2)</text>
+
+  <!-- 確定 → 未確定（逆流） -->
+  <path d="M 590 118 C 540 155, 475 155, 425 118" fill="none" stroke="#b91c1c" stroke-width="1.5" stroke-dasharray="6 3" marker-end="url(#arrow)"/>
+  <text x="507" y="168" font-size="12" text-anchor="middle" fill="#b91c1c">AI に調べ直させる（6 欄が上書きされるため未確定に戻る）</text>
+
+  <!-- 入口: 手入力で作成 -->
+  <text x="680" y="40" font-size="13" text-anchor="middle" fill="#475569">手入力で作成（自分が書いた＝確認済み）</text>
+  <line x1="680" y1="46" x2="680" y2="68" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 区切り線 -->
+  <line x1="40" y1="210" x2="840" y2="210" stroke="#cbd5e1" stroke-width="1"/>
+
+  <!-- ===== DrinkRecord（記録）の状態 ===== -->
+  <text x="40" y="248" font-size="17" font-weight="bold" fill="#0f172a">DrinkRecord（記録）の状態</text>
+
+  <!-- 入口: メニュー照会から保存（飲まなかった） -->
+  <text x="40" y="312" font-size="13" fill="#475569">調べて保存（飲まなかった）</text>
+  <line x1="212" y1="307" x2="240" y2="307" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 気になる -->
+  <rect x="245" y="278" width="180" height="56" rx="10" fill="#e0e7ff" stroke="#4338ca" stroke-width="1.5"/>
+  <text x="335" y="302" font-size="15" font-weight="bold" text-anchor="middle" fill="#312e81">気になる</text>
+  <text x="335" y="322" font-size="11" text-anchor="middle" fill="#3730a3">IS_INTERESTED (1)</text>
+
+  <!-- 気になる → 飲んだ（昇格） -->
+  <line x1="425" y1="296" x2="585" y2="296" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="505" y="286" font-size="12" text-anchor="middle" fill="#475569">昇格（実際に飲んだ。飲んだ日を埋める）</text>
+
+  <!-- 飲んだ -->
+  <rect x="590" y="278" width="180" height="56" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+  <text x="680" y="302" font-size="15" font-weight="bold" text-anchor="middle" fill="#14532d">飲んだ</text>
+  <text x="680" y="322" font-size="11" text-anchor="middle" fill="#166534">IS_DRUNK (2)</text>
+
+  <!-- 入口: 写真から登録・飲んだとして保存 -->
+  <text x="680" y="248" font-size="13" text-anchor="middle" fill="#475569">写真から登録／飲んだとして保存／まとめ取り込み</text>
+  <line x1="680" y1="254" x2="680" y2="274" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 注記 -->
+  <text x="40" y="392" font-size="12" fill="#64748b">・逆流は Brand の「調べ直し」1 本だけ。記録の昇格に逆方向は無い</text>
+  <text x="40" y="412" font-size="12" fill="#64748b">・負の code（終わった状態）は両方に無い ── 期限・取消が存在せず、削除は物理削除のため</text>
+</svg>
