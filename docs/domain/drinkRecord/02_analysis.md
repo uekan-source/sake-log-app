@@ -22,6 +22,7 @@
 - [名詞のふるい分け（段階 5）](#sifting)
 - [ユビキタス言語（段階 6）── 候補・7 軸評価・呼ばない語](#naming)
 - [概念を配る（段階 7）── コンテキスト判断・配る表・テーブル名](#contexts)
+- [段階 7 の修正 ── コンテキストは `user` 1 つ（ユーザーの反証）](#contexts-fix)
 - [実現方式のメモ（設計の外）](#impl-notes)
 
 **質問リストの経過（当時の番号のまま。新旧対応表を参照）**
@@ -476,6 +477,31 @@ udb_user_session
 
 - マージ規則のおかげで `drink_drink_record` にならず、`drink_record` が「酒の記録」とそのまま読める
 - コンテキストごとに全テーブルが隣接（③）。`drink_brand` と `drink_record` が並び、Q16（ユーザーごとの銘柄）は接頭辞ではなく `userId` 列が語る（⑦）
+
+<a name="contexts-fix"></a>
+
+## 段階 7 の修正：コンテキストは 1 つに戻す（2026-08-21・ユーザーの反証）
+
+**指摘（ユーザー）：** udb と drink は両方とも同じユーザーが触り、変更権限も同じに見える。分ける理由があるのか。カリキュラムでも最終的にはアカウント系とカートが同じコンテキストだった。
+
+**検証：** `model_templates.md` の冒頭に**明記されていた**──「教材の写しとはコンテキストの切り方が違う。教材は udb／…の 4 つだが、雛形は common／customer／shop の 3 つ。会員は udb.User ではなく customer.Customer。**雛形が新しいので、設計はこちらに合わせる**」。雛形の `edu.customer` は Customer／CustomerPassword／CustomerSession／Cart／CustomerCoupon／CustomerStampCard を**同居**させている。コンテキストの判断軸（触る人・変更権限）でも、認証と記録は同一人物・同一権限で分かれない。
+
+**修正：コンテキストは `user` の 1 つ。** User／UserPassword／UserSession／Brand／DrinkRecord の全部がここに入る（雛形 customer の型）。段階 7 で udb／drink に分けた判断は**却下**──根拠にした `curriculum_02` は古い方の切り方で、Claude が model_templates の冒頭注記を読み飛ばした。
+
+**テーブル名（確定し直し）**
+
+```
+user                 ← User。エンティティ名がコンテキスト名で始まるので重ねない（MySQL では予約語でなく使用可）
+user_brand
+user_drink_record
+user_password
+user_session
+```
+
+- 名前順で 5 つ全部が隣接（③ 満点）。`user_brand`／`user_drink_record` は「ユーザーごと」（Q16）を接頭辞が語る
+- 依存の向きの議論（drink → udb）は消滅（単一コンテキスト内の参照になる）
+- **判断が変わる条件：** アクターが増えたとき（管理者を立てる、共有・公開機能で「見る人」が分かれる）にコンテキストの分割を再検討
+- 実装メモ：雛形コードの実物は `app-lib` の `edu.udb` と設計雛形の `customer` の両方があるので、流用時の名前合わせは実装フェーズで決める
 
 <a name="impl-notes"></a>
 
