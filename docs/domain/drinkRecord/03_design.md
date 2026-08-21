@@ -12,9 +12,9 @@
 
 | エンティティ | テーブル | 扱い |
 |---|---|---|
-| `User` | `user` | **既存で足りる**（雛形 Customer 系の読み替え。形は 3 章末尾） |
-| `UserPassword` | `user_password` | 既存で足りる（同上） |
-| `UserSession` | `user_session` | 既存で足りる（同上） |
+| `User` | `user` | **追加**（設計は雛形 Customer 系の読み替え。形は 3 章末尾） |
+| `UserPassword` | `user_password` | 追加（同上） |
+| `UserSession` | `user_session` | 追加（同上） |
 | `Brand` | `user_brand` | **追加** |
 | `DrinkRecord` | `user_drink_record` | **追加** |
 
@@ -34,36 +34,15 @@
 
 ## 2. ER 図
 
+データの繋がりと多重度だけを示す。項目の正は 3 章の EntityModel。
+
 ```mermaid
 erDiagram
-    user ||--|| user_password : ""
-    user ||--o{ user_session : ""
-    user ||--o{ user_brand : ""
-    user ||--o{ user_drink_record : ""
-    user_brand ||--o{ user_drink_record : ""
-
-    user_brand {
-        Long id PK
-        Long userId FK "境界の鍵"
-        Short kind "種類"
-        String name "銘柄名"
-        String variety "品種(任意)"
-        String region "産地(任意)"
-        String taste "味わい(任意)"
-        String trivia "豆知識(任意)"
-        Short state "未確定/確定"
-    }
-    user_drink_record {
-        Long id PK
-        Long userId FK "境界の鍵"
-        Long brandId FK
-        Short state "気になる/飲んだ"
-        LocalDate drankAt "飲んだ日(任意)"
-        String shopName "店名(任意)"
-        String memo "備考(任意)"
-        String photoUrl "写真(任意)"
-        Short photoSource "写真の出所(任意)"
-    }
+    user ||--|| user_password : "パスワードは 1 人 1 本"
+    user ||--o{ user_session : "端末ごとに複数"
+    user ||--o{ user_brand : "銘柄はユーザーごと"
+    user ||--o{ user_drink_record : "記録もユーザーごと"
+    user_brand ||--o{ user_drink_record : "同じ銘柄を別の日に飲めば記録は複数（0 件でも銘柄は残る）"
 ```
 
 状態遷移：
@@ -95,7 +74,7 @@ case class Brand(
   region:    Option[String],                         // 産地
   taste:     Option[String],                         // 味わい
   trivia:    Option[String],                         // 豆知識
-  state:     Status        = Status.IS_UNCONFIRMED,  // 確認状態
+  state:     Status,                                 // 確認状態（デフォルトを持たない。経路ごとに明示する）
   updatedAt: LocalDateTime = Now,                    // データ更新日
   createdAt: LocalDateTime = Now                     // データ作成日
 ) extends EntityModel[Id]
@@ -117,10 +96,10 @@ object Brand:
   /**
    * 種類。深く扱うのはワインと日本酒
    */
-  enum Kind(val code: Short) extends EnumStatus[Short]:
-    case IS_WINE  extends Kind(code = 1) // ワイン
-    case IS_SAKE  extends Kind(code = 2) // 日本酒
-    case IS_OTHER extends Kind(code = 3) // その他（浅く受ける）
+  enum Kind(val code: Short, val name: String) extends EnumStatus[Short]:
+    case IS_WINE  extends Kind(code = 1, name = "ワイン")
+    case IS_SAKE  extends Kind(code = 2, name = "日本酒")
+    case IS_OTHER extends Kind(code = 3, name = "その他") // 浅く受ける
 
   /**
    * 確認状態
@@ -134,12 +113,17 @@ object Brand:
 
 - `name` だけ必須──銘柄は名前さえあれば立つ（手入力の最小形）。品種・産地・味わい・豆知識は AI が埋められなければ空でよい
 - `userId` が必須──ユーザーに属さない銘柄は存在しない
+- `state` にデフォルトが無い──AI 経路は未確定・手入力は確定と、作る経路ごとに必ず明示させる（デフォルトがあると手入力経路の指定漏れが静かに未確定を作る）
 
 **型では守れない決めごと**
 
 - **`kind` が `variety` の読み方を決める**：IS_WINE ならぶどう品種、IS_SAKE なら米の品種。IS_OTHER では原則使わない
 - **AI（照会・再照会）が書けるのは kind / name / variety / region / taste / trivia の 6 欄だけ**。再照会したら `state` を IS_UNCONFIRMED に戻す（内容が本人の見ていないものに変わるため）
 - **手入力で作った銘柄は最初から IS_CONFIRMED**（自分が書いた内容＝確認済み）
+- **本人の編集は state を変えない。** 未確定 → 確定は明示の確定操作だけ、確定 → 未確定は再照会だけ
+- `name` は空文字・空白のみを禁止（唯一の必須文字列で、候補提示の起点になるため）
+- **照会が失敗した写真からの登録は、仮の名前（例：「銘柄不明 8/21」）の未確定 Brand で受ける**──圏外や読み取り不能でも写真と記録を残す。後で再照会または手直しする
+- 再照会が上書きするのは 6 欄だけ。**写真（記録側にある）は取得し直さない**
 - **`(userId, name)` に一意制約は張らない**。重複銘柄は許容し、保存時の候補提示で吸収する。統合機能は無い
 - **記録が 0 件の銘柄だけ削除できる**。記録が付いている銘柄は消せない
 - **`Option` の文字列列に空文字は保存しない**（値が無いなら None）。「無い」の表現を None と `""` の 2 通りにしない
@@ -176,8 +160,7 @@ case class DrinkRecord(
   drankAt:     Option[LocalDate],                    // 飲んだ日（IS_DRUNK で埋まる。不明なら空）
   shopName:    Option[String],                       // 店名（どこで）
   memo:        Option[String],                       // 備考（本人の感想）
-  photoUrl:    Option[String],                       // 写真
-  photoSource: Option[PhotoSource],                  // 写真の出所
+  photo:       Option[Photo],                        // 写真（URL と出所のセット）
   updatedAt:   LocalDateTime = Now,                  // データ更新日
   createdAt:   LocalDateTime = Now                   // データ作成日
 ) extends EntityModel[Id]
@@ -204,6 +187,14 @@ object DrinkRecord:
     case IS_DRUNK      extends Status(code = 2) // 飲んだ
 
   /**
+   * 写真: URL と出所のセット。片方だけの状態を型で作れなくする
+   */
+  case class Photo(
+    url:    String,     // 参照キー（推測不能なキー。直リンクの静的配信はしない）
+    source: PhotoSource // 出所
+  )
+
+  /**
    * 写真の出所
    */
   enum PhotoSource(val code: Short) extends EnumStatus[Short]:
@@ -215,20 +206,20 @@ object DrinkRecord:
 
 - `brandId` が必須──銘柄の無い記録は存在しない。手入力でも銘柄（name だけの Brand）を先に作る
 - `drankAt` が `Option`──「気になる」（飲んでいない）と、まとめ取り込みで日付が分からない場合の両方を受ける
-- 写真が「なし」の 3 通り目は `photoUrl = None` で表す
+- 写真は `Option[Photo]`（URL＋出所のセット）──「URL だけ」「出所だけ」という不正な組み合わせは**型で作れない**。「なし」は None
 
 **型では守れない決めごと**
 
 - **`state` が `drankAt` の読み方を決める**：IS_INTERESTED のとき `drankAt` は必ず None。IS_DRUNK では原則埋めるが、取り込み等で不明なら None を許す
-- **`photoUrl` と `photoSource` は両方 Some か両方 None**（片方だけは不正）
-- 昇格（IS_INTERESTED → IS_DRUNK）の逆方向は無い
+- 同じ銘柄に「気になる」の記録が複数できることは許容する（昇格はどれを選んでもよい。一意制約は張らない）
+- 昇格（IS_INTERESTED → IS_DRUNK）の逆方向は無い（誤操作の訂正を許すかは Q21）
 - `Option` の文字列列（店名・備考など）に空文字は保存しない（Brand と同じ規約）
 - **1 枚の写真に複数本のボトルが写っていても、1 本分の記録として扱う**（AI 読み取りの運用ルール。切り出しはしない）
 - 備考と写真に AI は触れない──これは決めごとではなく、**AI が書ける欄を Brand 側に集めた分割の構造が守っている**
 
 **保存されるデータの例**
 
-| id | userId | brandId | state | drankAt | shopName | memo | photoUrl | photoSource |
+| id | userId | brandId | state | drankAt | shopName | memo | photo.url | photo.source |
 |---|---|---|---|---|---|---|---|---|
 | 1 | 1 | 1 | IS_DRUNK | 2026-08-15 | ビストロ青山 | 彼女と。また頼みたい | /p/a1.jpg | IS_SELF |
 | 2 | 1 | 2 | IS_INTERESTED | | 鮨わたなべ | | /p/b2.jpg | IS_FOUND |
@@ -359,36 +350,63 @@ object UserSession:
 - `user.email` に一意制約（ログイン Id）。`user.uuid` にも一意制約
 - `user_password.userId` に一意制約（User と 1:1。パスワードは 1 人 1 本）
 - `user_session.token` に一意制約。セッションは 1 人に複数あってよい（端末ごと）
+- **パスワード変更とアカウント停止（IS_INACTIVE）のときは、そのユーザーの全セッションを IS_CLOSED にする**（属性どうしの連動。漏えいしたトークンが最長 30 日生き残るのを防ぐ）
 - ゲスト照会の引き継ぎ（Q11）は **UserSession の行とは別物**──ログイン前の一時領域で持ち、どのテーブルにも書かない
 
 **保存されるデータの例**
 
 | テーブル | 例 |
 |---|---|
-| `user` | id=1, uuid=550e8400-…, email=ueno@example.com, name=かんた, state=IS_ACTIVE |
+| `user`（有効） | id=1, uuid=550e8400-…, email=ueno@example.com, name=かんた, state=IS_ACTIVE |
+| `user`（停止） | id=2, uuid=7c9e6679-…, email=test@example.com, name=テスト, state=IS_INACTIVE（ログイン不可。全セッションも失効） |
 | `user_password` | id=1, userId=1, hash=pbkdf2:… |
-| `user_session` | id=1, userId=1, token=a3f9…, state=IS_ACTIVE, expiresAt=2026-09-20（ログアウトすると IS_CLOSED） |
+| `user_session`（有効） | id=1, userId=1, token=a3f9…, state=IS_ACTIVE, expiresAt=2026-09-20 |
+| `user_session`（ログアウト済み） | id=2, userId=1, token=b7c2…, state=IS_CLOSED, expiresAt=2026-09-18 |
 
 ## 4. 区分値の考え方
 
 - 名前は `IS_` 始まり、`code` は正が「生きている」・負が「終わった」の規約に従う。**新規に作った区分値（Kind・Brand.Status・DrinkRecord.Status・PhotoSource）には負の code が 1 つも無い**──期限・取消・失効が要求に存在せず、削除は物理削除のため。「終わった」状態がそもそも生まれない。負を持つのは流用する User 系だけ（`IS_INACTIVE`＝停止、`IS_CLOSED`＝ログアウト済み） 
 - 状態を 1 本にせず **Brand（確認状態）と DrinkRecord（記録状態）に 2＋2 で分けた**。「未確定／確定」は銘柄の性質（AI の推定を確認したか）、「気になる／飲んだ」は記録の性質（体験がどうなったか）で、役目が違う。混ぜると「気になるが内容は確認済み」が表せない
 - `Kind` が enum である理由：種類が増えたら属性の解釈・画面・AI プロンプトのコードを書くことになる（エンジニアが増やす値）。対して品種・産地は増えてもコードが変わらないので文字列の属性
-- `PhotoSource` は `photoUrl` とセットで意味を持つ（単独では使わない）
+- `Kind` は業務の人（画面）に見せる区分値なので `name` を持つ（雛形 DiscountType と同じ判断）。`PhotoSource` は `Photo` の中でだけ使う内部区分なので `name` を持たない
 
 ## 5. エンティティをまたぐルール
 
-- **`DrinkRecord.userId` は参照先 `Brand.userId` と一致**していなければならない（他人の銘柄への参照は境界破り）
+**参照と境界**
+
+- **`DrinkRecord.userId` は参照先 `Brand.userId` と一致**していなければならない（他人の銘柄への参照は境界破り）。このルールと「記録が付いた銘柄は消せない」は**スキーマでも守る**（複合 FK と削除拒否。付録B）
+- **写真の配信も userId の照合を通す**。直リンクの静的配信はしない（テーブルだけ守っても、写真が漏れれば境界は破れる）
+
+**銘柄の付け替え（重複の掃除）**
+
+- **確認・確定の場面では、候補提示から記録を既存の銘柄に付け替えられる**（`brandId` の更新。付け替え先も同一 userId に限る）。写真経路とまとめ取り込みは保存時に候補を挟めず毎回新規の銘柄を作るため、これが重複の掃除手段になる
+- 付け替えで記録 0 件になった銘柄は削除できる
+
+**削除**
+
 - **削除は連鎖しない**：記録を消しても銘柄は消えない。記録 0 件になった銘柄のみ、本人の操作で削除できる
-- 記録の削除は写真ファイルも一緒に消す
-- アカウントを消す運用（機能としての退会は無い）では、**記録 → 銘柄 → パスワード・セッション → ユーザー**の順に消す
-- ゲスト（未ログイン）の照会は**どのテーブルにも書き込まない**。ログイン直後の引き継ぎはセッションの一時領域で行い、保存操作の時点で初めて Brand と DrinkRecord が書かれる
+- 写真ファイルは**記録と 1:1 で所有し、記録間で共有しない**。自前で保存したファイルは、記録の削除・写真の差し替え・アカウントを消す運用のすべてで必ず消す
+- アカウントを消す運用（機能としての退会は無い）では、**記録 → 銘柄 → パスワード・セッション → ユーザー**の順に、写真ファイルも含めて消す
+
+**照会と引き継ぎ**
+
+- 照会は**業務データ（銘柄・記録）を書き込まない**（ゲストも記録者も同じ）。**乱用対策のための照会の計数・ログは業務データの外に持ってよい**。公開デプロイはレート制限を前提とする
+- ゲスト → ログインの引き継ぎは、**推測不能なトークンを鍵にした短時間の一時領域**で行う。引き継ぐのは**照会結果と撮った写真**。保存完了または期限切れで写真ごと消す
+- 知識源へ送るのは銘柄の推定に必要な**写真とテキストだけ**。写真の EXIF（位置情報など）は**除去してから送る**。備考・店名・飲んだ日・ユーザー識別子は送らない（EXIF を送信前に読んで飲んだ日の下書きに使うかは Q20）
+
+**候補提示**
+
+- 「名前が近い」の判定は、記号・空白を除いた部分一致とし、かな・大文字小文字・全半角を吸収する照合で行う（これを決めないと中黒 1 つで候補に出ず、重複が量産される）
 
 ## 6. 置き場所（コンテキスト）
 
 **判断：** コンテキストは `user` の 1 つ。5 エンティティすべてがここに入る。
 
-**理由：** 所持物を持つアクターが記録者 1 人だけで、触る人と変更権限が全エンティティで同一。雛形も customer コンテキストに認証系（Password / Session）と業務エンティティ（Cart / StampCard）を同居させており、その型に合わせた。認証と記録で 2 つに割る案は、アクターが増えていないため却下（詳細は 02 の「段階 7 の修正」）。
+**理由：** 所持物を持つアクターが記録者 1 人だけで、触る人と変更権限が全エンティティで同一。雛形も customer コンテキストに認証系（Password / Session）と業務エンティティ（Cart / StampCard）を同居させており、その型に合わせた。
+
+**採らなかった案：** 認証（udb）と記録（drink）の 2 分割。教材の古い切り方にはあるが、コンテキストの判断軸（触る人・変更権限・画面）で認証と記録は同一人物・同一権限であり、アクターが増えていないのに境界を増やすことになるため却下。
+
+**判断が変わる条件：** アクターが増えたとき（管理者を立てる、共有機能で「見る人」が分かれる）。
 
 ---
 
@@ -414,9 +432,9 @@ object UserSession:
 
 ### 同じ銘柄の判定（同定）は候補提示＋本人が選ぶ
 
-- **判断：** 自動同定しない。保存時に名前が近い既存の銘柄を候補表示し、本人が「同じ」を選んだときだけ紐づける。`(userId, name)` の一意制約も張らない
+- **判断：** 自動同定しない。**保存時と確認時**に名前が近い既存の銘柄を候補表示し、本人が「同じ」を選んだときだけ紐づける（確認時は付け替え）。`(userId, name)` の一意制約も張らない
 - **理由：** 表記ゆれ（シャトー・マルゴー／Ch. Margaux）の自動一致は誤マージ・誤分裂が静かに起きる。外部コード（JAN）はメニュー照会で使えない。アプリの背骨「AI が下書きし、人が確定する」と同じ型に乗せれば、判定を間違えるのは本人だけで事故が見える
-- **代償：** 重複銘柄ができ得る。統合機能は作らないので、掃除は記録を消して 0 件になった銘柄を消すしかない
+- **代償：** 重複銘柄ができ得る──特に写真経路とまとめ取り込みは保存時に候補を挟めない（撮って終わりを守るため）ので毎回新規で作られる。掃除は「確認時に既存銘柄へ付け替え → 0 件になった銘柄を削除」で行い、自動の統合機能は作らない
 - **判断が変わる条件：** 重複が候補提示を実用にならないほど汚し始めたら（統合機能の追加を検討）
 
 ### 状態を Brand（確認）と DrinkRecord（体験）に分割
@@ -439,6 +457,13 @@ object UserSession:
 - **理由：** 照会の瞬間に書くと「飲んだでも気になるでもない行」が要り、状態機械が汚れる。ゲストと記録者の「調べる」が同じ振る舞いになり、ログイン引き継ぎとも整合する。店での最小操作（撮って終わり）は写真経路が保存を兼ねることで守る
 - **代償：** テキストで調べて何もしなければ結果は消える（もう一度調べ直す。API 呼び出しが 1 回増える）
 - **判断が変わる条件：** 照会履歴そのものに価値が出たら（例：調べた回数で好みを分析したくなったら）
+
+### 境界と参照整合はスキーマでも守る（複合 FK と削除拒否）
+
+- **判断：** `user_drink_record (brandId, userId)` から `user_brand (id, userId)` へ複合 FK を張り、記録が付いている銘柄の削除は DB が拒否する（RESTRICT）
+- **理由：** 「userId の一致」と「記録が付いた銘柄は消せない」はアプリの規約でも守れるが、セッションは端末ごとに複数を許しているため、別端末の同時操作（片方が 0 件確認 → 削除、もう片方が同じ銘柄へ保存）でチェックがすれ違い得る。宣言的に守れるルールは DB に守らせれば、規約が「破れない構造」になる──業務ルールを if で守る前に、触れない構造にできないか見る、の適用
+- **代償：** DDL と ORM の設定がやや複雑になる（複合キー）
+- **判断が変わる条件：** FK が張れない構成（シャーディング等）へ移行したら、アプリ層の検査に戻す
 
 ### 品種・産地は文字列の属性（マスタにしない）
 
