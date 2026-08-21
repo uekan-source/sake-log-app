@@ -3,7 +3,7 @@
  * 設計: docs/domain/drinkRecord/03_design.md
  */
 
-package sakelog.user.model
+package edu.user.model
 
 import java.time.LocalDate
 

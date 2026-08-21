@@ -6,7 +6,7 @@
  * Userセッションテーブル表
  */
 
-package sakelog.user.persistence.table
+package edu.user.persistence.table
 
 import javax.inject.*
 import slick.jdbc.JdbcProfile
@@ -14,7 +14,7 @@ import ixias.core.model.*
 import ixias.core.model.value.Token
 import ixias.db.slick.{ SlickTable, SlickDatabaseContext }
 import ixias.core.persistence.HostSpec
-import sakelog.user.model.{ User, UserSession }
+import edu.user.model.{ User, UserSession }
 
 /**
  * Table Definition: UserSession (`user_session`)

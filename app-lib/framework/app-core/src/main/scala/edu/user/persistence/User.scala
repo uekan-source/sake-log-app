@@ -3,35 +3,34 @@
  *
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
- * Userパスワードリポジトリ
+ * Userリポジトリ
  */
 
-package sakelog.user.persistence
+package edu.user.persistence
 
 import javax.inject.*
 import scala.concurrent.Future
 import ixias.db.slick.{ SlickBaseRepository, SlickDatabaseContext }
 import ixias.core.persistence.HostSpec
 
-import sakelog.user.model.User
-import sakelog.user.persistence.table.UserPasswordTable
+import edu.user.persistence.table.UserTable
 
 /**
- * Repository for UserPassword persistence (credentials).
+ * Repository for User persistence.
  */
 @Singleton
-class UserPasswordRepository @Inject()(
-  table: UserPasswordTable,
+class UserRepository @Inject()(
+  table: UserTable,
   ctx:   SlickDatabaseContext
 ) extends SlickBaseRepository(table, ctx):
   import api.*
 
   /**
-   * Resolve a user's credential by user id (used at login).
-   * パスワードをUserIdによって検索する
+   * Resolve a user by login email (used by signup/login).
+   * Userを検索するときにemailで検索するメソッド(emailは一意なため)
    */
-  def findByUserId(uid: User.Id): Future[Option[EntityEmbeddedId]] =
+  def findByEmail(email: String): Future[Option[EntityEmbeddedId]] =
     RunDBAction(HostSpec.REPLICA): slick =>
       slick
-        .filter(_.uid === uid)
+        .filter(_.email === email)
         .result.headOption

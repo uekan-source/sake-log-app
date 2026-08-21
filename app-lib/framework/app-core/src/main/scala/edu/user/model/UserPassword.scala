@@ -6,7 +6,7 @@
  * Userパスワードのエンティティモデル
  */
 
-package sakelog.user.model
+package edu.user.model
 
 import ixias.core.model.*
 import ixias.core.security.PBKDF2

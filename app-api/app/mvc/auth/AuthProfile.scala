@@ -19,7 +19,7 @@ import ixias.web.play.session.TokenManagerViaCookie
 import ixias.web.play.session.AuthProfile as IxiasAuthProfile
 
 import mvc.AppRepositoryFacade
-import sakelog.user.model.{ User, UserSession }
+import edu.user.model.{ User, UserSession }
 
 /**
  * Session authentication for the email/password login flow.

@@ -24,7 +24,7 @@ import model.user.reads.JsValueLogin
  * User login.  POST /user/api/login  { email, password }
  *
  * Looks up the user by email, verifies the password against the stored
- * PBKDF2 hash ([[sakelog.user.model.UserPassword]]), issues a login session,
+ * PBKDF2 hash ([[edu.user.model.UserPassword]]), issues a login session,
  * and sets the session cookie.
  */
 class LoginController @Inject()(

@@ -529,7 +529,7 @@ DrinkRecord.state  IS_INTERESTED（気になる） → IS_DRUNK（飲んだ）�
 ### `Brand`（銘柄）
 
 ```scala
-package sakelog.user.model
+package edu.user.model
 
 import ixias.core.model.*
 
@@ -607,7 +607,7 @@ object Brand:
 ### `DrinkRecord`（記録）
 
 ```scala
-package sakelog.user.model
+package edu.user.model
 
 import ixias.core.model.*
 

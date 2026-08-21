@@ -6,11 +6,11 @@
  * パッケージ、ここにリポジトリ、テーブルを追記して管理する。Facadeにはリポジトリを追記して使う
  */
 
-package sakelog.user
+package edu.user
 
 import javax.inject.*
 import ixias.core.inject.IxiasModule
-import sakelog.user.persistence.table.*
+import edu.user.persistence.table.*
 
 package object persistence:
 

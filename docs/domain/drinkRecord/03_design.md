@@ -53,7 +53,7 @@
 ### `Brand`（銘柄）
 
 ```scala
-package sakelog.user.model
+package edu.user.model
 
 import ixias.core.model.*
 
@@ -140,7 +140,7 @@ object Brand:
 ### `DrinkRecord`（記録）
 
 ```scala
-package sakelog.user.model
+package edu.user.model
 
 import ixias.core.model.*
 
@@ -233,7 +233,7 @@ object DrinkRecord:
 雛形 `Customer` / `CustomerPassword` / `CustomerSession` を **Customer → User に読み替えて流用**する。設計判断は雛形に従い、ここでは形だけ確定させる（雛形にあるハッシュ化・照合などの処理は実装時にそのまま持ってくる）。
 
 ```scala
-package sakelog.user.model
+package edu.user.model
 
 import ixias.core.model.*
 
@@ -278,7 +278,7 @@ object User:
 ```
 
 ```scala
-package sakelog.user.model
+package edu.user.model
 
 import ixias.core.model.*
 import ixias.core.security.PBKDF2
@@ -307,7 +307,7 @@ object UserPassword:
 ```
 
 ```scala
-package sakelog.user.model
+package edu.user.model
 
 import ixias.core.model.*
 import ixias.core.model.value.Token

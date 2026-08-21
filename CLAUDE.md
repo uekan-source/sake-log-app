@@ -34,6 +34,6 @@ education-book-scala-app と同じ。
 
 Scala 3 / Play（`app-api`）+ ixiaS（`app-lib`）+ SvelteKit（`app`）。DB は MySQL 8.0（docker-compose）。
 
-- **雛形（認証まわり）は education-book-scala-app から流用済み**：User / UserPassword / UserSession（パッケージは設計どおり `sakelog.user` に読み替え済み）、認証 API（signup / login / logout / me）、そのマイグレーションと OpenAPI 定義、Svelte の器
+- **雛形（認証まわり）は education-book-scala-app から流用済み**：User / UserPassword / UserSession（パッケージは設計どおり `edu.user` に読み替え済み）、認証 API（signup / login / logout / me）、そのマイグレーションと OpenAPI 定義、Svelte の器
 - **アプリ固有の機能（銘柄・記録）の実装は、モデル設計のレビューが終わるまで書かない**
 - 実装に入るときの決めごとの順序と縦 1 本の範囲は、`docs/domain/drinkRecord/02_analysis.md` の「多視点レビュー」節の実装引き継ぎを見る

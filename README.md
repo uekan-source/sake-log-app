@@ -16,7 +16,7 @@
 | `docs/notes/` | 作業用ノート |
 | `app/` | フロントエンド（SvelteKit）。雛形の認証画面まで入っている |
 | `app-api/` | API（Scala 3 / Play）。雛形の認証 API（登録・ログイン・ログアウト）まで入っている |
-| `app-lib/` | フレームワークライブラリ（ixiaS。`sakelog.user` の User / UserPassword / UserSession を含む） |
+| `app-lib/` | フレームワークライブラリ（ixiaS。`edu.user` の User / UserPassword / UserSession を含む） |
 | `etc/` | database（マイグレーション）/ docker / openapi |
 
 雛形（認証まわり）は education-book-scala-app から流用。**アプリ固有の機能実装は、モデル設計のレビュー後に始める。**

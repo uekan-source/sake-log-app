@@ -19,7 +19,7 @@ import play.api.libs.json.Json
 
 import mvc.{ AppControllerComponents, BaseAbstractController }
 import model.user.reads.JsValueSignup
-import sakelog.user.model.{ User, UserPassword }
+import edu.user.model.{ User, UserPassword }
 
 /**
  * User registration.  POST /user/api/signup  { email, password, name }
