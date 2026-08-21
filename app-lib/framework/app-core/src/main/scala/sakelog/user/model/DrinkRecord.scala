@@ -5,6 +5,8 @@
 
 package sakelog.user.model
 
+import java.time.LocalDate
+
 import ixias.core.model.*
 
 /**
