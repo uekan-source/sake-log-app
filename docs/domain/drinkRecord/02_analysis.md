@@ -23,6 +23,7 @@
 - [ユビキタス言語（段階 6）── 候補・7 軸評価・呼ばない語](#naming)
 - [概念を配る（段階 7）── コンテキスト判断・配る表・テーブル名](#contexts)
 - [段階 7 の修正 ── コンテキストは `user` 1 つ（ユーザーの反証）](#contexts-fix)
+- [モデルの形（段階 8）── Brand / DrinkRecord の case class と決めごと](#model-shape)
 - [実現方式のメモ（設計の外）](#impl-notes)
 
 **質問リストの経過（当時の番号のまま。新旧対応表を参照）**
@@ -502,6 +503,193 @@ user_session
 - 依存の向きの議論（drink → udb）は消滅（単一コンテキスト内の参照になる）
 - **判断が変わる条件：** アクターが増えたとき（管理者を立てる、共有・公開機能で「見る人」が分かれる）にコンテキストの分割を再検討
 - 実装メモ：雛形コードの実物は `app-lib` の `edu.udb` と設計雛形の `customer` の両方があるので、流用時の名前合わせは実装フェーズで決める
+
+<a name="model-shape"></a>
+
+## モデルの形（段階 8・Claude 起案。2026-08-21）
+
+形だけ。メソッドと検証は書かない。作法は雛形 `model_templates.md`（Customer / CustomerCoupon）に合わせた。パッケージのルート名は実装時に確定。
+
+### 状態の設計 ── 2 つのエンティティに 2 状態ずつ割れた
+
+当初は DrinkRecord に「気になる／未確定／確定」の 3 状態を積む想定だったが、**「未確定／確定」は銘柄の状態**（AI の推定を自分が確認したか）で、**「気になる／飲んだ」は記録の状態**（体験がどうなったか）と気づいた。混ぜると「気になるだが内容は確認済み」が表せない。雛形の教訓「UserCoupon が 5 状態だったのは役目が 2 つ混ざっていたから。分けたら 2＋3 になった」と同じ形。
+
+```
+Brand.state        IS_UNCONFIRMED（未確定） → IS_CONFIRMED（確定）
+                   ※ AI の再照会で欄が上書きされたら IS_UNCONFIRMED に戻る（逆流 1 本）
+
+DrinkRecord.state  IS_INTERESTED（気になる） → IS_DRUNK（飲んだ）＝昇格（Q7）
+```
+
+負の code（終わった状態）は両方とも無し──期限・失効・取消が要求に存在せず、削除は物理削除（Q15）のため。
+
+### `Brand`（銘柄）
+
+```scala
+package sakelog.user.model
+
+import ixias.core.model.*
+
+/**
+ * 銘柄: ユーザーごとに育つ、酒の銘柄情報。
+ *
+ * AI（知識源）が下書きし、ユーザーが確認・修正して確定する。
+ * name〜trivia が「AI が書ける欄」。再照会するとこの 5 欄は上書きされる。
+ */
+import Brand.*
+case class Brand(
+  id:        Option[Id],                             // 管理Id
+  userId:    User.Id,                                // ユーザーId（アクセス境界の鍵）
+  kind:      Kind,                                   // 種類
+  name:      String,                                 // 銘柄名
+  variety:   Option[String],                         // 品種（kind が読み方を決める）
+  region:    Option[String],                         // 産地
+  taste:     Option[String],                         // 味わい
+  trivia:    Option[String],                         // 豆知識
+  state:     Status        = Status.IS_UNCONFIRMED,  // 確認状態
+  updatedAt: LocalDateTime = Now,                    // データ更新日
+  createdAt: LocalDateTime = Now                     // データ作成日
+) extends EntityModel[Id]
+
+/**
+ * 銘柄: 付随する型と処理の定義
+ */
+object Brand:
+
+  // --[ Type Aliases ]------------------------------------------------
+  type Id         = Id.Repr
+  type WithNoId   = Entity.WithNoId[Id, Brand]
+  type EmbeddedId = Entity.EmbeddedId[Id, Brand]
+
+  // --[ Opaque Values ]-----------------------------------------------
+  object Id extends Entity.Id[Long]
+
+  // --[ Value Objects ]-----------------------------------------------
+  /**
+   * 種類。深く扱うのはワインと日本酒（対象は Q の回答で確定）
+   */
+  enum Kind(val code: Short) extends EnumStatus[Short]:
+    case IS_WINE  extends Kind(code = 1) // ワイン
+    case IS_SAKE  extends Kind(code = 2) // 日本酒
+    case IS_OTHER extends Kind(code = 3) // その他（浅く受ける）
+
+  /**
+   * 確認状態
+   */
+  enum Status(val code: Short) extends EnumStatus[Short]:
+    case IS_UNCONFIRMED extends Status(code = 1) // 未確定（AI の推定のまま）
+    case IS_CONFIRMED   extends Status(code = 2) // 確定（ユーザーが確認した）
+```
+
+**ここで型が語っていること**
+
+- `name` だけ必須──銘柄は名前さえあれば立つ（手入力の最小形）。品種・産地・味わい・豆知識は AI が埋められなければ空でよい
+- `userId` が必須──ユーザーに属さない銘柄は存在しない（Q16）
+
+**型では守れない決めごと**
+
+- **`kind` が `variety` の読み方を決める**：IS_WINE ならぶどう品種、IS_SAKE なら米の品種など。IS_OTHER では原則使わない
+- **AI（再照会）が上書きしてよいのは name / variety / region / taste / trivia の 5 欄だけ**。再照会したら `state` を IS_UNCONFIRMED に戻す（内容が自分の見ていないものに変わったため）
+- **`(userId, name)` に一意制約は張らない**。重複銘柄は許容し、保存時の候補提示（Q17）で吸収する。統合機能は無い
+- 記録が 0 件になっても銘柄は消さない（銘柄一覧そのものが「詳しくなる」ための資産）
+
+**保存されるデータの例**
+
+| id | userId | kind | name | variety | region | taste | trivia | state |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 1 | IS_WINE | シャトー・メルシャン 桔梗ヶ原メルロー | メルロー | 長野県 塩尻 | 重すぎず滑らかなタンニン | 桔梗ヶ原は日本メルローの聖地と呼ばれる | IS_CONFIRMED |
+| 2 | 1 | IS_SAKE | 風の森 ALPHA 1 | 秋津穂 | 奈良県 御所 | 微発泡で甘やか | 全量無濾過無加水生酒の蔵 | IS_UNCONFIRMED |
+| 3 | 1 | IS_OTHER | 私の白猫（果実酒） | | | 甘口 | | IS_CONFIRMED |
+
+### `DrinkRecord`（記録）
+
+```scala
+package sakelog.user.model
+
+import ixias.core.model.*
+
+/**
+ * 記録: 酒との出会い 1 回分。
+ *
+ * 「気になる」（調べたが飲んでいない）も同じモデルの状態違い。
+ * 写真は記録に付く（同じ銘柄でも飲むたびに撮る写真は別）。
+ */
+import DrinkRecord.*
+case class DrinkRecord(
+  id:          Option[Id],                           // 管理Id
+  userId:      User.Id,                              // ユーザーId（アクセス境界の鍵）
+  brandId:     Brand.Id,                             // 銘柄Id
+  state:       Status,                               // 記録状態
+  drankAt:     Option[LocalDate],                    // 飲んだ日（IS_DRUNK で埋まる。不明なら空）
+  shopName:    Option[String],                       // 店名（どこで）
+  memo:        Option[String],                       // 備考（自分の感想）
+  photoUrl:    Option[String],                       // 写真
+  photoSource: Option[PhotoSource],                  // 写真の出所
+  updatedAt:   LocalDateTime = Now,                  // データ更新日
+  createdAt:   LocalDateTime = Now                   // データ作成日
+) extends EntityModel[Id]
+
+/**
+ * 記録: 付随する型と処理の定義
+ */
+object DrinkRecord:
+
+  // --[ Type Aliases ]------------------------------------------------
+  type Id         = Id.Repr
+  type WithNoId   = Entity.WithNoId[Id, DrinkRecord]
+  type EmbeddedId = Entity.EmbeddedId[Id, DrinkRecord]
+
+  // --[ Opaque Values ]-----------------------------------------------
+  object Id extends Entity.Id[Long]
+
+  // --[ Value Objects ]-----------------------------------------------
+  /**
+   * 記録状態
+   */
+  enum Status(val code: Short) extends EnumStatus[Short]:
+    case IS_INTERESTED extends Status(code = 1) // 気になる（調べたが飲んでいない）
+    case IS_DRUNK      extends Status(code = 2) // 飲んだ
+
+  /**
+   * 写真の出所
+   */
+  enum PhotoSource(val code: Short) extends EnumStatus[Short]:
+    case IS_SELF  extends PhotoSource(code = 1) // 自分が撮った
+    case IS_FOUND extends PhotoSource(code = 2) // 知識源が探してきた
+```
+
+**ここで型が語っていること**
+
+- `brandId` が必須──銘柄の無い記録は存在しない。手入力でも銘柄（name だけの Brand）を先に作る
+- `drankAt` が `Option`──気になる（飲んでいない）と、取り込みで日付が分からない場合の両方を受ける
+- 「なし」の写真は `photoUrl = None` で表す（出所の 3 通り目は行として持たない）
+
+**型では守れない決めごと**
+
+- **`state` が `drankAt` の読み方を決める**：IS_INTERESTED のとき `drankAt` は必ず None。IS_DRUNK では原則埋めるが、取り込み等で不明なら None を許す
+- **`photoUrl` と `photoSource` は両方 Some か両方 None**（片方だけは不正）
+- **`userId` は `brandId` の指す Brand の userId と一致**していなければならない（他人の銘柄への参照は境界破り）
+- 昇格（IS_INTERESTED → IS_DRUNK）の逆方向は無い
+- AI・再照会が触れるのは Brand 側だけ。`memo` と写真に AI は触れない──これは決めごとではなく**分割の構造が守っている**（Q9 の「備考は上書きされない」を型で実現）
+
+**保存されるデータの例**
+
+| id | userId | brandId | state | drankAt | shopName | memo | photoUrl | photoSource |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 1 | 1 | IS_DRUNK | 2026-08-15 | ビストロ青山 | 彼女と。また頼みたい | /p/a1.jpg | IS_SELF |
+| 2 | 1 | 2 | IS_INTERESTED | | 鮨わたなべ | | /p/b2.jpg | IS_FOUND |
+| 3 | 1 | 1 | IS_DRUNK | | | | /p/c3.jpg | IS_SELF |
+| 4 | 1 | 3 | IS_DRUNK | 2026-07-01 | | 手入力で登録 | | |
+
+（3 行目＝まとめ取り込み直後：日付不明・銘柄は同じシャトー・メルシャン＝ brandId 共有。4 行目＝手入力・写真なし）
+
+### 段階 8 で決めた判断（発注者レビュー待ち）
+
+1. **状態を Brand（未確定/確定）と DrinkRecord（気になる/飲んだ）に分けた**
+2. **写真は記録に置く**（同じ銘柄を 2 回飲めば写真も 2 枚。銘柄の代表画像は最新の記録から計算できるので保存しない）
+3. **ヴィンテージ（年）は持たない**──01 の項目（名前・品種・産地・味わい・蘊蓄・備考）に無い。要るなら name に含めるか、判断が変わる条件として付録B へ
+4. **記録が 0 件でも銘柄は残す**
+5. **再照会したら Brand は未確定に戻る**
 
 <a name="impl-notes"></a>
 
