@@ -63,7 +63,11 @@
   <text x="680" y="248" font-size="13" text-anchor="middle" fill="#475569">写真から登録／飲んだとして保存／まとめ取り込み</text>
   <line x1="680" y1="254" x2="680" y2="274" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
 
+  <!-- 飲んだ → 気になる（訂正） -->
+  <path d="M 590 324 C 540 360, 475 360, 425 324" fill="none" stroke="#b91c1c" stroke-width="1.5" stroke-dasharray="6 3" marker-end="url(#arrow)"/>
+  <text x="507" y="374" font-size="12" text-anchor="middle" fill="#b91c1c">訂正（調べただけだった・誤操作。飲んだ日を消す）</text>
+
   <!-- 注記 -->
-  <text x="40" y="392" font-size="12" fill="#64748b">・逆流は Brand の「調べ直し」1 本だけ。記録の昇格に逆方向は無い</text>
-  <text x="40" y="412" font-size="12" fill="#64748b">・負の code（終わった状態）は両方に無い ── 期限・取消が存在せず、削除は物理削除のため</text>
+  <text x="40" y="400" font-size="12" fill="#64748b">・逆流は 2 本 ── Brand の「調べ直し」と、記録の「訂正」（どちらも破線）</text>
+  <text x="40" y="418" font-size="12" fill="#64748b">・負の code（終わった状態）は両方に無い ── 期限・取消が存在せず、削除は物理削除のため</text>
 </svg>
