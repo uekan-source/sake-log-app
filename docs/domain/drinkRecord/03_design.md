@@ -34,16 +34,12 @@
 
 ## 2. ER 図
 
-データの繋がりと多重度だけを示す。項目の正は 3 章の EntityModel。
+データの繋がりと多重度を示す。項目の正は 3 章の EntityModel。
 
-```mermaid
-erDiagram
-    user ||--|| user_password : "パスワードは 1 人 1 本"
-    user ||--o{ user_session : "端末ごとに複数"
-    user ||--o{ user_brand : "銘柄はユーザーごと"
-    user ||--o{ user_drink_record : "記録もユーザーごと"
-    user_brand ||--o{ user_drink_record : "同じ銘柄を別の日に飲めば記録は複数（0 件でも銘柄は残る）"
-```
+![ER 図](./images/er_diagram.svg)
+
+- ユーザーとパスワードだけ `1:1`（パスワードは 1 人 1 本）。セッションは端末ごとに複数
+- 銘柄 `1:*` 記録──同じ銘柄を別の日に飲めば記録が増える。記録 0 件でも銘柄は残る
 
 状態遷移：
 

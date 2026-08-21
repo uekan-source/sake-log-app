@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="920" viewBox="0 0 1200 920" font-family="'Hiragino Sans', 'Noto Sans JP', sans-serif">
+  <rect x="0" y="0" width="1200" height="920" fill="#ffffff"/>
+  <text x="600" y="44" font-size="19" font-weight="bold" text-anchor="middle" fill="#0f172a">ER 図 — お酒の記録まわりのデータの繋がり</text>
+
+  <!-- ========== 接続線（直角・多重度ラベル） ========== -->
+  <g stroke="#6d28d9" stroke-width="2" fill="none">
+    <!-- User - UserPassword (1:1) -->
+    <path d="M360,170 H570 V150 H780"/>
+    <!-- User - UserSession (1:*) -->
+    <path d="M360,250 H600 V390 H780"/>
+    <!-- User - Brand (1:*) -->
+    <path d="M200,348 V560"/>
+    <!-- User - DrinkRecord (1:*) -->
+    <path d="M320,348 V500 H900 V560"/>
+    <!-- Brand - DrinkRecord (1:*) -->
+    <path d="M490,700 H720"/>
+  </g>
+  <g font-size="15" font-weight="bold" fill="#6d28d9">
+    <text x="600" y="140" text-anchor="middle">1 : 1</text>
+    <text x="614" y="330">1 : *</text>
+    <text x="212" y="470">1 : *</text>
+    <text x="332" y="470">1 : *</text>
+    <text x="605" y="690" text-anchor="middle">1 : *</text>
+  </g>
+
+  <!-- ========== ユーザー User（雛形流用） ========== -->
+  <rect x="60" y="130" width="300" height="218" rx="10" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+  <path d="M60,140 a10,10 0 0 1 10,-10 h280 a10,10 0 0 1 10,10 v44 h-300 z" fill="#64748b"/>
+  <text x="78" y="153" font-size="16" font-weight="bold" fill="#ffffff">ユーザー</text>
+  <text x="78" y="173" font-size="12" fill="#ffffff" opacity="0.85">User</text>
+  <text x="342" y="153" font-size="12" text-anchor="end" fill="#ffffff">雛形流用</text>
+  <g font-size="13" fill="#1f2937">
+    <text x="78" y="206">ユーザー ID</text>
+    <text x="78" y="236">公開用識別子（UUID）</text>
+    <text x="78" y="266">メールアドレス（ログイン Id）</text>
+    <text x="78" y="296">表示名</text>
+    <text x="78" y="326">状態（有効 / 停止）</text>
+  </g>
+
+  <!-- ========== ユーザーパスワード UserPassword（雛形流用） ========== -->
+  <rect x="780" y="90" width="340" height="128" rx="10" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+  <path d="M780,100 a10,10 0 0 1 10,-10 h320 a10,10 0 0 1 10,10 v44 h-340 z" fill="#64748b"/>
+  <text x="798" y="113" font-size="16" font-weight="bold" fill="#ffffff">ユーザーパスワード</text>
+  <text x="798" y="133" font-size="12" fill="#ffffff" opacity="0.85">UserPassword</text>
+  <text x="1102" y="113" font-size="12" text-anchor="end" fill="#ffffff">雛形流用</text>
+  <g font-size="13" fill="#1f2937">
+    <text x="798" y="166">ユーザー ID</text>
+    <text x="798" y="196">パスワードのハッシュ</text>
+  </g>
+
+  <!-- ========== ユーザーセッション UserSession（雛形流用） ========== -->
+  <rect x="780" y="300" width="340" height="188" rx="10" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+  <path d="M780,310 a10,10 0 0 1 10,-10 h320 a10,10 0 0 1 10,10 v44 h-340 z" fill="#64748b"/>
+  <text x="798" y="323" font-size="16" font-weight="bold" fill="#ffffff">ユーザーセッション</text>
+  <text x="798" y="343" font-size="12" fill="#ffffff" opacity="0.85">UserSession</text>
+  <text x="1102" y="323" font-size="12" text-anchor="end" fill="#ffffff">雛形流用</text>
+  <g font-size="13" fill="#1f2937">
+    <text x="798" y="376">ユーザー ID</text>
+    <text x="798" y="406">トークン</text>
+    <text x="798" y="436">状態（有効 / ログアウト済み）</text>
+    <text x="798" y="466">有効期限</text>
+  </g>
+
+  <!-- ========== 銘柄 Brand（今回追加） ========== -->
+  <rect x="140" y="560" width="350" height="308" rx="10" fill="#f0fdf4" stroke="#15803d" stroke-width="1.5"/>
+  <path d="M140,570 a10,10 0 0 1 10,-10 h330 a10,10 0 0 1 10,10 v44 h-350 z" fill="#15803d"/>
+  <text x="158" y="583" font-size="16" font-weight="bold" fill="#ffffff">銘柄</text>
+  <text x="158" y="603" font-size="12" fill="#ffffff" opacity="0.85">Brand</text>
+  <text x="472" y="583" font-size="12" text-anchor="end" fill="#ffffff">今回追加</text>
+  <g font-size="13" fill="#1f2937">
+    <text x="158" y="636">ユーザー ID</text>
+    <text x="158" y="666">種類（ワイン / 日本酒 / その他）</text>
+    <text x="158" y="696">銘柄名</text>
+    <text x="158" y="726">品種</text>
+    <text x="158" y="756">産地</text>
+    <text x="158" y="786">味わい</text>
+    <text x="158" y="816">豆知識</text>
+    <text x="158" y="846">状態（未確定 / 確定）</text>
+  </g>
+
+  <!-- ========== 記録 DrinkRecord（今回追加） ========== -->
+  <rect x="720" y="560" width="380" height="278" rx="10" fill="#f0fdf4" stroke="#15803d" stroke-width="1.5"/>
+  <path d="M720,570 a10,10 0 0 1 10,-10 h360 a10,10 0 0 1 10,10 v44 h-380 z" fill="#15803d"/>
+  <text x="738" y="583" font-size="16" font-weight="bold" fill="#ffffff">記録</text>
+  <text x="738" y="603" font-size="12" fill="#ffffff" opacity="0.85">DrinkRecord</text>
+  <text x="1082" y="583" font-size="12" text-anchor="end" fill="#ffffff">今回追加</text>
+  <g font-size="13" fill="#1f2937">
+    <text x="738" y="636">ユーザー ID</text>
+    <text x="738" y="666">銘柄 ID</text>
+    <text x="738" y="696">状態（気になる / 飲んだ）</text>
+    <text x="738" y="726">飲んだ日</text>
+    <text x="738" y="756">店名</text>
+    <text x="738" y="786">備考（本人の感想）</text>
+    <text x="738" y="816">写真（URL と出所のセット）</text>
+  </g>
+
+  <!-- 注記 -->
+  <text x="60" y="900" font-size="12" fill="#64748b">・全テーブルにユーザー ID が乗る（アクセス境界の鍵）。記録 → 銘柄の参照は同一ユーザー内に限る。項目の正は EntityModel</text>
+</svg>
