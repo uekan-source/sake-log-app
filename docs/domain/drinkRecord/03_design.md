@@ -12,7 +12,7 @@
 
 | エンティティ | テーブル | 扱い |
 |---|---|---|
-| `User` | `user` | **既存で足りる**（雛形の User/認証系を流用） |
+| `User` | `user` | **既存で足りる**（雛形 Customer 系の読み替え。形は 3 章末尾） |
 | `UserPassword` | `user_password` | 既存で足りる（同上） |
 | `UserSession` | `user_session` | 既存で足りる（同上） |
 | `Brand` | `user_brand` | **追加** |
@@ -235,9 +235,141 @@ object DrinkRecord:
 
 （2 行目＝メニューで調べて気になる・写真は知識源。3 行目＝まとめ取り込み直後・日付不明・1 行目と同じ銘柄を参照。4 行目＝手入力・写真なし）
 
+### `User` / `UserPassword` / `UserSession`（雛形の読み替え）
+
+雛形 `Customer` / `CustomerPassword` / `CustomerSession` を **Customer → User に読み替えて流用**する。設計判断は雛形に従い、ここでは形だけ確定させる（雛形にあるハッシュ化・照合などの処理は実装時にそのまま持ってくる）。
+
+```scala
+package sakelog.user.model
+
+import ixias.core.model.*
+
+/**
+ * ユーザー: 登録されたアカウント。プロフィールのみを持つ。
+ */
+import User.*
+case class User(
+  id:        Option[Id],                        // 管理Id
+  uuid:      UUID,                              // UUID（公開用の識別子）
+  email:     String,                            // ログインId (メールアドレス)
+  name:      String,                            // 表示名
+  state:     Status        = Status.IS_ACTIVE,  // アカウント状態
+  updatedAt: LocalDateTime = Now,               // データ更新日
+  createdAt: LocalDateTime = Now                // データ作成日
+) extends EntityModel[Id]
+
+object User:
+
+  // --[ Type Aliases ]------------------------------------------------
+  type Id         = Id.Repr
+  type UUID       = UUID.Repr
+  type WithNoId   = Entity.WithNoId[Id, User]
+  type EmbeddedId = Entity.EmbeddedId[Id, User]
+
+  // --[ Opaque Values ]-----------------------------------------------
+  object Id extends Entity.Id[Long]
+
+  /**
+   * 公開用の識別子
+   */
+  object UUID extends Entity.Id[String]:
+    def generate: UUID = UUID(java.util.UUID.randomUUID.toString)
+
+  // --[ Value Objects ]-----------------------------------------------
+  /**
+   * アカウント状態
+   */
+  enum Status(val code: Short) extends EnumStatus[Short]:
+    case IS_INACTIVE extends Status(code = -1) // 停止
+    case IS_ACTIVE   extends Status(code =  1) // 有効
+```
+
+```scala
+package sakelog.user.model
+
+import ixias.core.model.*
+import ixias.core.security.PBKDF2
+
+/**
+ * ユーザーパスワード: PBKDF2 ハッシュ。本体から分離して持つ。
+ */
+import UserPassword.*
+case class UserPassword(
+  id:        Option[Id],          // 管理Id
+  userId:    User.Id,             // ユーザーId
+  hash:      String,              // PBKDF2ハッシュ文字列
+  updatedAt: LocalDateTime = Now, // データ更新日
+  createdAt: LocalDateTime = Now  // データ作成日
+) extends EntityModel[Id]
+
+object UserPassword:
+
+  // --[ Type Aliases ]------------------------------------------------
+  type Id         = Id.Repr
+  type WithNoId   = Entity.WithNoId[Id, UserPassword]
+  type EmbeddedId = Entity.EmbeddedId[Id, UserPassword]
+
+  // --[ Opaque Values ]-----------------------------------------------
+  object Id extends Entity.Id[Long]
+```
+
+```scala
+package sakelog.user.model
+
+import ixias.core.model.*
+import ixias.core.model.value.Token
+
+/**
+ * ユーザーセッション: サーバ側で保持するログインセッション。
+ */
+import UserSession.*
+case class UserSession(
+  id:        Option[Id],                        // 管理Id
+  userId:    User.Id,                           // ユーザーId
+  token:     Token,                             // セッショントークン（未署名）
+  state:     Status        = Status.IS_ACTIVE,  // セッション状態
+  expiresAt: LocalDateTime = Now.plusDays(30),  // 有効期限
+  updatedAt: LocalDateTime = Now,               // データ更新日
+  createdAt: LocalDateTime = Now                // データ作成日
+) extends EntityModel[Id]
+
+object UserSession:
+
+  // --[ Type Aliases ]------------------------------------------------
+  type Id         = Id.Repr
+  type WithNoId   = Entity.WithNoId[Id, UserSession]
+  type EmbeddedId = Entity.EmbeddedId[Id, UserSession]
+
+  // --[ Opaque Values ]-----------------------------------------------
+  object Id extends Entity.Id[Long]
+
+  // --[ Value Objects ]-----------------------------------------------
+  /**
+   * セッション状態
+   */
+  enum Status(val code: Short) extends EnumStatus[Short]:
+    case IS_CLOSED extends Status(code = -1) // 無効化: ログアウト済み
+    case IS_ACTIVE extends Status(code =  1) // 有効
+```
+
+**型では守れない決めごと（User 系）**
+
+- `user.email` に一意制約（ログイン Id）。`user.uuid` にも一意制約
+- `user_password.userId` に一意制約（User と 1:1。パスワードは 1 人 1 本）
+- `user_session.token` に一意制約。セッションは 1 人に複数あってよい（端末ごと）
+- ゲスト照会の引き継ぎ（Q11）は **UserSession の行とは別物**──ログイン前の一時領域で持ち、どのテーブルにも書かない
+
+**保存されるデータの例**
+
+| テーブル | 例 |
+|---|---|
+| `user` | id=1, uuid=550e8400-…, email=ueno@example.com, name=かんた, state=IS_ACTIVE |
+| `user_password` | id=1, userId=1, hash=pbkdf2:… |
+| `user_session` | id=1, userId=1, token=a3f9…, state=IS_ACTIVE, expiresAt=2026-09-20（ログアウトすると IS_CLOSED） |
+
 ## 4. 区分値の考え方
 
-- 名前は `IS_` 始まり、`code` は正が「生きている」・負が「終わった」の規約に従う。**今回、負の code を持つ区分値が 1 つも無い**──期限・取消・失効が要求に存在せず、削除は物理削除のため。「終わった」状態がそもそも生まれない
+- 名前は `IS_` 始まり、`code` は正が「生きている」・負が「終わった」の規約に従う。**新規に作った区分値（Kind・Brand.Status・DrinkRecord.Status・PhotoSource）には負の code が 1 つも無い**──期限・取消・失効が要求に存在せず、削除は物理削除のため。「終わった」状態がそもそも生まれない。負を持つのは流用する User 系だけ（`IS_INACTIVE`＝停止、`IS_CLOSED`＝ログアウト済み） 
 - 状態を 1 本にせず **Brand（確認状態）と DrinkRecord（記録状態）に 2＋2 で分けた**。「未確定／確定」は銘柄の性質（AI の推定を確認したか）、「気になる／飲んだ」は記録の性質（体験がどうなったか）で、役目が違う。混ぜると「気になるが内容は確認済み」が表せない
 - `Kind` が enum である理由：種類が増えたら属性の解釈・画面・AI プロンプトのコードを書くことになる（エンジニアが増やす値）。対して品種・産地は増えてもコードが変わらないので文字列の属性
 - `PhotoSource` は `photoUrl` とセットで意味を持つ（単独では使わない）
