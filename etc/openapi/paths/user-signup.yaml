@@ -8,7 +8,7 @@
 summary: Sign up
 description: >-
   Registers a user with email and password. The password is PBKDF2-hashed
-  into `udb_user_password`, kept in a separate table from the `udb_user`
+  into `user_password`, kept in a separate table from the `user`
   profile, and the raw value is never stored.
 
   A session is issued as part of the same request, so the response already

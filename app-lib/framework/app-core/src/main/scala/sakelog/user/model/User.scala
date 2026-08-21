@@ -6,7 +6,7 @@
  * Userのエンティティモデル
  */
 
-package edu.udb.model
+package sakelog.user.model
 
 import ixias.core.model.*
 

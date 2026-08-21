@@ -2,11 +2,11 @@
 -- Copyright IxiaS, Inc. All Rights Reserved.
 --
 -- Simple email + password user registration with server-side sessions.
--- Profile (udb_user), credential (udb_user_password), session (udb_user_session)
+-- Profile (user), credential (user_password), session (user_session)
 -- are kept in separate tables.
 --
 
-CREATE TABLE `udb_user` (
+CREATE TABLE `user` (
   `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `uuid`       VARCHAR(64)  NOT NULL,
   `email`      VARCHAR(255) NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE `udb_user` (
   UNIQUE KEY `ukey02` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `udb_user_password` (
+CREATE TABLE `user_password` (
   `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `uid`        BIGINT UNSIGNED NOT NULL,
   `hash`       VARCHAR(255) NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE `udb_user_password` (
   UNIQUE KEY `ukey01` (`uid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `udb_user_session` (
+CREATE TABLE `user_session` (
   `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `uid`        BIGINT UNSIGNED NOT NULL,
   `token`      VARCHAR(255) NOT NULL,

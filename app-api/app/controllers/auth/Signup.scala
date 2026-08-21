@@ -18,8 +18,8 @@ import ixias.core.util.Log.*
 import play.api.libs.json.Json
 
 import mvc.{ AppControllerComponents, BaseAbstractController }
-import model.udb.reads.JsValueSignup
-import edu.udb.model.{ User, UserPassword }
+import model.user.reads.JsValueSignup
+import sakelog.user.model.{ User, UserPassword }
 
 /**
  * User registration.  POST /user/api/signup  { email, password, name }
@@ -46,7 +46,7 @@ class SignupController @Inject()(
       else Right((email, body.password, name))
     // Step-3: Reject a duplicate email. emailの二重登録確認(非同期処理)
     .flatMapF { case (email, password, name) =>
-      repos.udb.user.findByEmail(email).map {
+      repos.user.user.findByEmail(email).map {
         case Some(_) => Left(Conflict("email already registered"))
         case None    => Right((email, password, name))
       }
@@ -54,13 +54,13 @@ class SignupController @Inject()(
     // Step-4: Create the user + credential + session, set the cookie. DBへの登録処理(非同期処理)
     .semiflatMap { case (email, password, name) =>
       for
-        uid <- repos.udb.user.add(User(
+        uid <- repos.user.user.add(User(
           id    = None,
           uuid  = User.UUID.generate,
           email = email,
           name  = name,
         ).toWithNoId)
-        _      <- repos.udb.userPassword.add(UserPassword.hashed(uid, password))
+        _      <- repos.user.userPassword.add(UserPassword.hashed(uid, password))
         result <- auth.open(uid)(Created(Json.obj("id" -> uid.value)))
       yield
         info(s"[AUTH] signup complete uid=${uid.value}")

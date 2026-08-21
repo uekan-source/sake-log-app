@@ -18,13 +18,13 @@ import ixias.core.util.Log.*
 import play.api.libs.json.Json
 
 import mvc.{ AppControllerComponents, BaseAbstractController }
-import model.udb.reads.JsValueLogin
+import model.user.reads.JsValueLogin
 
 /**
  * User login.  POST /user/api/login  { email, password }
  *
  * Looks up the user by email, verifies the password against the stored
- * PBKDF2 hash ([[edu.udb.model.UserPassword]]), issues a login session,
+ * PBKDF2 hash ([[sakelog.user.model.UserPassword]]), issues a login session,
  * and sets the session cookie.
  */
 class LoginController @Inject()(
@@ -37,11 +37,11 @@ class LoginController @Inject()(
       request.decode[JsValueLogin]
     // Step-2: Look up the user and verify the password.
     .flatMapF { body =>
-      repos.udb.user.findByEmail(body.email.trim.toLowerCase).flatMap {
+      repos.user.user.findByEmail(body.email.trim.toLowerCase).flatMap {
         case None =>
           Future.successful(Left(Unauthorized("invalid email or password")))
         case Some(user) =>
-          repos.udb.userPassword.findByUserId(user.id).map {
+          repos.user.userPassword.findByUserId(user.id).map {
             case Some(pw) if pw.v.verify(body.password) => Right(user)
             case _ => Left(Unauthorized("invalid email or password"))
           }

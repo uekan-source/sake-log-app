@@ -13,7 +13,7 @@ description: >-
 
   The cookie's HMAC signature is verified before any query runs, so a
   tampered cookie is rejected without touching the database. A token whose
-  `udb_user_session` row is gone — logged out, or never issued — is a 401
+  `user_session` row is gone — logged out, or never issued — is a 401
   even when the signature still checks out, because the row is the source
   of truth.
 responses:

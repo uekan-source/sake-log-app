@@ -19,14 +19,14 @@ import ixias.web.play.session.TokenManagerViaCookie
 import ixias.web.play.session.AuthProfile as IxiasAuthProfile
 
 import mvc.AppRepositoryFacade
-import edu.udb.model.{ User, UserSession }
+import sakelog.user.model.{ User, UserSession }
 
 /**
  * Session authentication for the email/password login flow.
  *
  * Implements ixias's [[ixias.web.play.session.AuthProfile]] on top of
  * [[ixias.web.play.session.TokenManagerViaCookie]]: the cookie carries a
- * *signed* token (`{signature}-{nonce}-{token}`), while `udb_user_session`
+ * *signed* token (`{signature}-{nonce}-{token}`), while `user_session`
  * stores the raw [[Token]]. A tampered cookie fails the HMAC check before any
  * query runs, and logout revokes the session server-side by deleting the row —
  * so the database stays the single source of truth.
@@ -68,10 +68,10 @@ class AuthProfile @Inject()(
     tokenManager.extract(request) match
       case Left(rejected) => Future.successful(Left(rejected))
       case Right(token)   =>
-        repos.udb.userSession.findByToken(token).flatMap {
+        repos.user.userSession.findByToken(token).flatMap {
           case None          => Future.successful(Left(Unauthorized("The session is no longer valid")))
           case Some(session) =>
-            repos.udb.user.find(session.v.uid).map {
+            repos.user.user.find(session.v.uid).map {
               case None       => Left(Unauthorized("The session owner no longer exists"))
               case Some(user) => Right(user)
             }
@@ -83,7 +83,7 @@ class AuthProfile @Inject()(
    */
   def open(uid: User.Id)(result: Result)(using ExecutionContext): Future[Result] =
     val token = Token.generate
-    repos.udb.userSession
+    repos.user.userSession
       .add(UserSession(id = None, uid = uid, token = token).toWithNoId)
       .map(_ => tokenManager.put(token)(result))
 
@@ -94,6 +94,6 @@ class AuthProfile @Inject()(
    */
   def close(request: RequestHeader)(result: Result)(using ExecutionContext): Future[Result] =
     val revoked = tokenManager.extract(request) match
-      case Right(token) => repos.udb.userSession.deleteByToken(token).map(_ => ())
+      case Right(token) => repos.user.userSession.deleteByToken(token).map(_ => ())
       case Left(_)      => Future.unit
     revoked.map(_ => tokenManager.discard(result))

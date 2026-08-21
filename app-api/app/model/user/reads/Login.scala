@@ -6,7 +6,7 @@
  * ログインのためのJSON翻訳ファイル
  */
 
-package model.udb.reads
+package model.user.reads
 
 import io.circe.Decoder
 import io.circe.generic.semiauto.*

@@ -6,17 +6,17 @@
  * Userパスワードのテーブル表
  */
 
-package edu.udb.persistence.table
+package sakelog.user.persistence.table
 
 import javax.inject.*
 import slick.jdbc.JdbcProfile
 import ixias.core.model.*
 import ixias.db.slick.{ SlickTable, SlickDatabaseContext }
 import ixias.core.persistence.HostSpec
-import edu.udb.model.{ User, UserPassword }
+import sakelog.user.model.{ User, UserPassword }
 
 /**
- * Table Definition: UserPassword (`udb_user_password`)
+ * Table Definition: UserPassword (`user_password`)
  */
 @Singleton
 class UserPasswordTable @Inject()(ctx: SlickDatabaseContext)
@@ -30,7 +30,7 @@ class UserPasswordTable @Inject()(ctx: SlickDatabaseContext)
 
   val query = TableQuery[Table]
 
-  case class Table(tag: Tag) extends BasicTable(tag, "udb_user_password"):
+  case class Table(tag: Tag) extends BasicTable(tag, "user_password"):
     import UserPassword.*
 
     @pk  def id        = column[Id]            ("id",         O.UInt64, O.AutoInc, O.PrimaryKey)

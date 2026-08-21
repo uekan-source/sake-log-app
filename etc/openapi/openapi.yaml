@@ -11,7 +11,7 @@ info:
   version: 1.0.0
   description: >-
     Training template API. Authentication is a signed `session` cookie issued
-    by signup / login and resolved server-side against `udb_user_session` on
+    by signup / login and resolved server-side against `user_session` on
     every request.
   license:
     name: IxiaS

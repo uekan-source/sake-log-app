@@ -54,7 +54,7 @@ export interface paths {
         put?: never;
         /**
          * Sign up
-         * @description Registers a user with email and password. The password is PBKDF2-hashed into `udb_user_password`, kept in a separate table from the `udb_user` profile, and the raw value is never stored.
+         * @description Registers a user with email and password. The password is PBKDF2-hashed into `user_password`, kept in a separate table from the `user` profile, and the raw value is never stored.
          *     A session is issued as part of the same request, so the response already carries the `session` cookie and the caller is logged in — no follow-up login round trip.
          *     `email` is trimmed and lower-cased before the uniqueness check.
          */
@@ -192,7 +192,7 @@ export interface paths {
         put?: never;
         /**
          * Log out
-         * @description Deletes the `udb_user_session` row the cookie points at, then discards the cookie. Server side goes first, so the token is dead even for a client that keeps its copy.
+         * @description Deletes the `user_session` row the cookie points at, then discards the cookie. Server side goes first, so the token is dead even for a client that keeps its copy.
          *     Idempotent: a request with no cookie, or one whose signature no longer verifies, still returns 204 rather than an error — there is nothing to reveal and nothing left to do.
          */
         post: {
@@ -232,7 +232,7 @@ export interface paths {
         /**
          * Get my profile
          * @description Resolves the logged-in user from the `session` cookie and returns the public profile. Authentication status is conveyed by the HTTP code (200 / 401), not a payload field.
-         *     The cookie's HMAC signature is verified before any query runs, so a tampered cookie is rejected without touching the database. A token whose `udb_user_session` row is gone — logged out, or never issued — is a 401 even when the signature still checks out, because the row is the source of truth.
+         *     The cookie's HMAC signature is verified before any query runs, so a tampered cookie is rejected without touching the database. A token whose `user_session` row is gone — logged out, or never issued — is a 401 even when the signature still checks out, because the row is the source of truth.
          */
         get: {
             parameters: {

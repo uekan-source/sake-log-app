@@ -7,7 +7,7 @@
 
 summary: Log out
 description: >-
-  Deletes the `udb_user_session` row the cookie points at, then discards the
+  Deletes the `user_session` row the cookie points at, then discards the
   cookie. Server side goes first, so the token is dead even for a client that
   keeps its copy.
 

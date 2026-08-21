@@ -6,7 +6,7 @@
  *　Userセッションエンティティモデル
  */
 
-package edu.udb.model
+package sakelog.user.model
 
 import ixias.core.model.*
 import ixias.core.model.value.Token
