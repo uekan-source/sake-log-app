@@ -1,0 +1,14 @@
+#
+# Copyright IxiaS, Inc. All Rights Reserved.
+#
+# For the full copyright and license information,
+# please view the LICENSE file that was distributed with this source code.
+#
+
+description: 競合。登録しようとした email が既に使われている。
+content:
+  text/plain:
+    schema:
+      type: string
+      examples:
+        - "email already registered"

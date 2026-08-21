@@ -1,0 +1,39 @@
+#
+# Copyright IxiaS, Inc. All Rights Reserved.
+#
+# For the full copyright and license information,
+# please view the LICENSE file that was distributed with this source code.
+#
+# これは mvc.ErrorHandler が返す唯一の JSON エンベロープ形式。
+# コントローラーが明示的に返す 4xx (400/401/409) は text/plain なので注意。
+#
+
+description: 想定外のサーバーエラー。mvc.ErrorHandler が整形して返す。
+content:
+  application/json:
+    schema:
+      type: object
+      required:
+        - error
+        - message
+        - code
+      properties:
+        error:
+          type: boolean
+          examples:
+            - true
+        message:
+          type: string
+          examples:
+            - "Unexpected error"
+        code:
+          type: string
+          description: HTTP ステータスコード
+          examples:
+            - "500"
+        errors:
+          type: array
+          items:
+            type: string
+          examples:
+            - []

@@ -1,0 +1,73 @@
+#
+# Copyright IxiaS, Inc. All Rights Reserved.
+#
+# For the full copyright and license information,
+# please view the LICENSE file that was distributed with this source code.
+#
+
+summary: Sign up
+description: >-
+  Registers a user with email and password. The password is PBKDF2-hashed
+  into `udb_user_password`, kept in a separate table from the `udb_user`
+  profile, and the raw value is never stored.
+
+  A session is issued as part of the same request, so the response already
+  carries the `session` cookie and the caller is logged in — no follow-up
+  login round trip.
+
+  `email` is trimmed and lower-cased before the uniqueness check.
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - email
+          - password
+          - name
+        properties:
+          email:
+            type: string
+            format: email
+            description: Login ID. Already registered → 409.
+            examples:
+              - "taro@example.com"
+          password:
+            type: string
+            minLength: 8
+            description: Raw password. Shorter than 8 characters → 400.
+            examples:
+              - "password123"
+          name:
+            type: string
+            description: Display name. Empty → 400.
+            examples:
+              - "山田 太郎"
+responses:
+  201:
+    description: Registered, session cookie set
+    headers:
+      Set-Cookie:
+        description: Signed session cookie
+        schema:
+          type: string
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+              format: int64
+              description: Management ID of the created user
+              examples:
+                - 1
+  400:
+    $ref: '../components/responses/400.yaml'
+  409:
+    $ref: '../components/responses/409.yaml'
+  500:
+    $ref: '../components/responses/500.yaml'

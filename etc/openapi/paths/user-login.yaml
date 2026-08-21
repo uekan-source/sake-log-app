@@ -1,0 +1,62 @@
+#
+# Copyright IxiaS, Inc. All Rights Reserved.
+#
+# For the full copyright and license information,
+# please view the LICENSE file that was distributed with this source code.
+#
+
+summary: Log in
+description: >-
+  Looks the user up by email and compares the supplied password against the
+  stored PBKDF2 hash. On success a fresh session row is inserted and the
+  `session` cookie is set.
+
+  An unknown email and a wrong password both return the same 401 with the
+  same message, so the response cannot be used to probe which addresses are
+  registered.
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - email
+          - password
+        properties:
+          email:
+            type: string
+            format: email
+            examples:
+              - "taro@example.com"
+          password:
+            type: string
+            examples:
+              - "password123"
+responses:
+  200:
+    description: Authenticated, session cookie set
+    headers:
+      Set-Cookie:
+        description: Signed session cookie
+        schema:
+          type: string
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+              format: int64
+              description: Management ID of the authenticated user
+              examples:
+                - 1
+  400:
+    $ref: '../components/responses/400.yaml'
+  401:
+    $ref: '../components/responses/401.yaml'
+  500:
+    $ref: '../components/responses/500.yaml'

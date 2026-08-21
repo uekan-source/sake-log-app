@@ -14,9 +14,11 @@
 |---|---|
 | `docs/domain/` | 機能ごとの設計文書（`01_requirements` / `02_analysis` / `03_design`） |
 | `docs/notes/` | 作業用ノート |
-| `app/` | フロントエンド（Svelte）。実装フェーズで作成 |
-| `app-api/` | API（Scala 3）。実装フェーズで作成 |
-| `app-lib/` | フレームワークライブラリ。実装フェーズで作成 |
-| `etc/` | database / docker / openapi。実装フェーズで作成 |
+| `app/` | フロントエンド（SvelteKit）。雛形の認証画面まで入っている |
+| `app-api/` | API（Scala 3 / Play）。雛形の認証 API（登録・ログイン・ログアウト）まで入っている |
+| `app-lib/` | フレームワークライブラリ（ixiaS。`edu.udb` の User / UserPassword / UserSession を含む） |
+| `etc/` | database（マイグレーション）/ docker / openapi |
+
+雛形（認証まわり）は education-book-scala-app から流用。**アプリ固有の機能実装は、モデル設計のレビュー後に始める。**
 
 構成は [education-book-scala-app](https://github.com/uekan-source/education-book-scala-app) に倣う。

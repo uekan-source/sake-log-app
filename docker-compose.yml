@@ -1,0 +1,20 @@
+#
+# Copyright IxiaS, Inc. All Rights Reserved.
+#
+# Local development infrastructure. Minimal: MySQL only.
+# (Production additionally runs an nginx reverse proxy for TLS / subdomain routing.)
+#
+
+services:
+  # DB: MySQL
+  mysql:
+    image: 'mysql/mysql-server:8.0'
+    environment:
+      TZ: 'Asia/Tokyo'
+      MYSQL_ROOT_PASSWORD: 'pass'
+    ports:
+      - 13306:3306
+    volumes:
+      # init.sql creates the `app` database + user on first start.
+      - ./etc/docker/mysql/data:/docker-entrypoint-initdb.d
+      - ./etc/docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf

@@ -1,0 +1,18 @@
+#
+# Copyright IxiaS, Inc. All Rights Reserved.
+#
+# For the full copyright and license information,
+# please view the LICENSE file that was distributed with this source code.
+#
+
+description: >-
+  認証失敗。Cookie 未送信 (`The session token not found`)、
+  署名不正 (`Invalid token signature`)、
+  セッション失効 (`The session is no longer valid`)、
+  資格情報の不一致 (`invalid email or password`) のいずれか。
+content:
+  text/plain:
+    schema:
+      type: string
+      examples:
+        - "The session token not found"

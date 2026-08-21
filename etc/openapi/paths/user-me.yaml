@@ -1,0 +1,58 @@
+#
+# Copyright IxiaS, Inc. All Rights Reserved.
+#
+# For the full copyright and license information,
+# please view the LICENSE file that was distributed with this source code.
+#
+
+summary: Get my profile
+description: >-
+  Resolves the logged-in user from the `session` cookie and returns the
+  public profile. Authentication status is conveyed by the HTTP code
+  (200 / 401), not a payload field.
+
+  The cookie's HMAC signature is verified before any query runs, so a
+  tampered cookie is rejected without touching the database. A token whose
+  `udb_user_session` row is gone — logged out, or never issued — is a 401
+  even when the signature still checks out, because the row is the source
+  of truth.
+responses:
+  200:
+    description: Current authenticated user
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - id
+            - uuid
+            - name
+            - email
+          properties:
+            id:
+              type: integer
+              format: int64
+              description: Management ID (internal sequence)
+              examples:
+                - 1
+            uuid:
+              type: string
+              format: uuid
+              description: Public identifier. Prefer this over `id` when exposing a user.
+              examples:
+                - "6486431a-3cac-4ba2-b32d-e67b673b8f76"
+            name:
+              type: string
+              description: Display name
+              examples:
+                - "山田 太郎"
+            email:
+              type: string
+              format: email
+              description: Login ID
+              examples:
+                - "taro@example.com"
+  401:
+    $ref: '../components/responses/401.yaml'
+  500:
+    $ref: '../components/responses/500.yaml'

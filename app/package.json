@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "scripts": {
+    "dev": "pnpm -r dev",
+    "build": "pnpm -r build",
+    "check": "pnpm -r check",
+    "prepare": "git config core.hooksPath .githooks || true"
+  },
+  "packageManager": "pnpm@9.15.4"
+}

@@ -1,0 +1,12 @@
+# Routes
+# This file defines the top-level application routes (higher priority first).
+# ~~~~
+
+# Health check
+GET    /ping        controllers.ApplicationController.ping
+
+# User (email/password session auth)
+POST   /user/api/signup    controllers.auth.SignupController.invoke
+POST   /user/api/login     controllers.auth.LoginController.invoke
+POST   /user/api/logout    controllers.auth.LogoutController.invoke
+GET    /user/api/me        controllers.auth.GetMyProfileController.invoke

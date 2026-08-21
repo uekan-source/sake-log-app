@@ -1,0 +1,16 @@
+logs
+target
+.bsp
+.bloop
+.metals
+.idea
+.idea_modules
+.classpath
+.project
+.settings
+.vscode
+.DS_Store
+*.pem
+RUNNING_PID
+/project/.sbtserver
+/project/.sbtserver.lock

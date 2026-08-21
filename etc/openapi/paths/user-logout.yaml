@@ -1,0 +1,26 @@
+#
+# Copyright IxiaS, Inc. All Rights Reserved.
+#
+# For the full copyright and license information,
+# please view the LICENSE file that was distributed with this source code.
+#
+
+summary: Log out
+description: >-
+  Deletes the `udb_user_session` row the cookie points at, then discards the
+  cookie. Server side goes first, so the token is dead even for a client that
+  keeps its copy.
+
+  Idempotent: a request with no cookie, or one whose signature no longer
+  verifies, still returns 204 rather than an error — there is nothing to
+  reveal and nothing left to do.
+responses:
+  204:
+    description: Logged out, session cookie discarded
+    headers:
+      Set-Cookie:
+        description: Discard instruction for the session cookie (Max-Age=0)
+        schema:
+          type: string
+  500:
+    $ref: '../components/responses/500.yaml'

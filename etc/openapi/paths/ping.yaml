@@ -1,0 +1,21 @@
+#
+# Copyright IxiaS, Inc. All Rights Reserved.
+#
+# For the full copyright and license information,
+# please view the LICENSE file that was distributed with this source code.
+#
+
+summary: Health Check
+description: >-
+  Health check endpoint for system monitoring. Used by load balancers and
+  monitoring systems to verify system availability. Requires no authentication.
+parameters: []
+responses:
+  200:
+    description: System is operational
+    content:
+      text/plain:
+        schema:
+          type: string
+          examples:
+            - "ok"

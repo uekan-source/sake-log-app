@@ -1,0 +1,4 @@
+packages:
+  - "packages"   # @app/api — etc/openapi から生成した型（全アプリで共有）
+  - "web"
+  # 新しいフロントアプリを足すときは、ここに直下ディレクトリ名を追記する（例: "admin"）。

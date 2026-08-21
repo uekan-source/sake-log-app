@@ -1,0 +1,22 @@
+#
+# Copyright IxiaS, Inc. All Rights Reserved.
+#
+# For the full copyright and license information,
+# please view the LICENSE file that was distributed with this source code.
+#
+# NOTE: コントローラーが返す 4xx は `BadRequest("...")` のように
+#       文字列を渡しているため text/plain です。JSON エンベロープ
+#       (`{error, message, code, errors}`) を返すのは mvc.ErrorHandler が
+#       処理する未捕捉エラー（ルート不一致の 404 や 500）だけです。
+#
+
+description: >-
+  リクエスト不正。JSON のパース失敗（`Parsing Failure: ...`）、
+  デコード失敗（`Decoding Failure: ...`）、
+  バリデーション違反のいずれか。
+content:
+  text/plain:
+    schema:
+      type: string
+      examples:
+        - "password must be at least 8 characters"

@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# Copyright IxiaS, Inc. All Rights Reserved.
+#
+# pre-commit — block the commit when `pnpm -r check` (svelte-check) reports any
+# ERROR or WARNING in the frontend workspace.
+#
+# Enable once with:  (cd app && pnpm install)  # runs the `prepare` script
+# Bypass intentionally with:  git commit --no-verify
+
+set -e
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT/app"
+
+# Skip gracefully if the workspace deps are not installed yet.
+if [ ! -d node_modules ]; then
+  echo "[pre-commit] app/node_modules not found — skipping svelte-check."
+  exit 0
+fi
+
+echo "[pre-commit] running 'pnpm -r check' (svelte-check) ..."
+OUTPUT="$(pnpm -r check 2>&1)" || true
+echo "$OUTPUT"
+
+if echo "$OUTPUT" | grep -qE "[1-9][0-9]* ERRORS|[1-9][0-9]* WARNINGS"; then
+  echo ""
+  echo "[pre-commit] ✗ svelte-check reported errors or warnings — commit aborted."
+  echo "[pre-commit]   Fix them above, or bypass once with: git commit --no-verify"
+  exit 1
+fi
+
+echo "[pre-commit] ✓ no errors or warnings."

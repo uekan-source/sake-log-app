@@ -1,0 +1,18 @@
+{
+  "name": "@app/api",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": "./src/api/client.ts"
+  },
+  "scripts": {
+    "generate": "../../etc/openapi/build.sh"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.13.0"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.6.0"
+  }
+}
