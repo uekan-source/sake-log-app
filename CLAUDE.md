@@ -4,6 +4,8 @@
 
 **発注者はユーザー自身。** 要求の正は `docs/domain/` の `01_requirements.md`。
 
+**現在地は `docs/notes/progress.md`（作業の栞）。** セッションの区切りに「どこまでやった」「次にやる」を上に追記する。思考の記録は 02 に書き、栞は短く保つ。
+
 ## 手順と原則の正
 
 設計の手順・原則・書き方は **education-book-scala-app 側の `docs/notes/` が正**（`design_procedure.md` / `design_lessons.md` / `document_format.md`）。2 箇所に置くとズレるため、このリポジトリには写さない。設計を始めるときは向こうの手順書を開くこと。
