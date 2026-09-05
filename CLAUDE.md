@@ -10,7 +10,7 @@
 
 設計の手順・原則・書き方は **education-book-scala-app 側の `docs/notes/` が正**（`design_procedure.md` / `design_lessons.md` / `document_format.md`）。2 箇所に置くとズレるため、このリポジトリには写さない。設計を始めるときは向こうの手順書を開くこと。
 
-ローカルパス: `/Volumes/dev/git-dev/education-book-scala-app/docs/notes/`
+ローカルパス: `~/education-book-scala-app/docs/notes/`（マシンを変えたらここを直す。無ければ https://github.com/uekan-source/education-book-scala-app をクローンする）
 
 ## ドキュメントの構成
 
