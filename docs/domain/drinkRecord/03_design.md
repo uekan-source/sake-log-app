@@ -15,8 +15,10 @@
 | `User` | `user` | **追加**（設計は雛形 Customer 系の読み替え。形は 3 章末尾） |
 | `UserPassword` | `user_password` | 追加（同上） |
 | `UserSession` | `user_session` | 追加（同上） |
-| `Brand` | `user_brand` | **追加** |
-| `DrinkRecord` | `user_drink_record` | **追加** |
+| `Brand` | `brand` | **追加** |
+| `DrinkRecord` | `drink_record` | **追加** |
+
+テーブル名に接頭辞 `user_` は付けない（発注者の指定・2026-09-05。02 の命名評価では接頭辞が「ユーザーごと」を語るとしていたが、コンテキストが 1 つの現状では冗長と判断。認証系の `user_password` / `user_session` は User 本体の付属なので `user_` のまま）。
 
 ## 1. 用語 — 全体の用語集に追加する呼称
 
@@ -465,7 +467,7 @@ object UserSession:
 
 ### 境界と参照整合はスキーマでも守る（複合 FK と削除拒否）
 
-- **判断：** `user_drink_record (brandId, userId)` から `user_brand (id, userId)` へ複合 FK を張り、記録が付いている銘柄の削除は DB が拒否する（RESTRICT）
+- **判断：** `drink_record (brandId, userId)` から `brand (id, userId)` へ複合 FK を張り、記録が付いている銘柄の削除は DB が拒否する（RESTRICT）
 - **理由：** 「userId の一致」と「記録が付いた銘柄は消せない」はアプリの規約でも守れるが、セッションは端末ごとに複数を許しているため、別端末の同時操作（片方が 0 件確認 → 削除、もう片方が同じ銘柄へ保存）でチェックがすれ違い得る。宣言的に守れるルールは DB に守らせれば、規約が「破れない構造」になる──業務ルールを if で守る前に、触れない構造にできないか見る、の適用
 - **代償：** DDL と ORM の設定がやや複雑になる（複合キー）
 - **判断が変わる条件：** FK が張れない構成（シャーディング等）へ移行したら、アプリ層の検査に戻す

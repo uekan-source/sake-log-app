@@ -20,9 +20,13 @@ package object persistence:
       singleton[UserTable]
       singleton[UserPasswordTable]
       singleton[UserSessionTable]
+      singleton[BrandTable]
+      singleton[DrinkRecordTable]
       singleton[UserRepository]
       singleton[UserPasswordRepository]
       singleton[UserSessionRepository]
+      singleton[BrandRepository]
+      singleton[DrinkRecordRepository]
       singleton[RepositoryFacade]
 
   /** Aggregated repositories for the User domain (injected by app-api). */
@@ -31,4 +35,6 @@ package object persistence:
     val user:         UserRepository,
     val userPassword: UserPasswordRepository,
     val userSession:  UserSessionRepository,
+    val brand:        BrandRepository,
+    val drinkRecord:  DrinkRecordRepository,
   )
